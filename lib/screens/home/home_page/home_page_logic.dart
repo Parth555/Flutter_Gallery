@@ -12,7 +12,7 @@ class HomePageLogic extends GetxController {
   var imageList = <ImageData>[].obs;
   var page = 1;
   var hasMore = true;
-
+  String lastQuery = '';
   @override
   void onInit() {
     fetchImages();
@@ -20,6 +20,7 @@ class HomePageLogic extends GetxController {
   }
 
   void fetchImages({String query = "nature", bool loadMore = false}) async {
+    lastQuery = query;
     if (!loadMore) {
       isLoading(true);
       page = 1; // Reset to page 1 for new searches
@@ -36,7 +37,7 @@ class HomePageLogic extends GetxController {
         'q=$query&'
         'image_type=photo&'
         'page=$page&'
-        'per_page=20',
+        'per_page=${Constant.PER_PAGE_DATA}',
       );
       if (response.statusCode == 200) {
         final imageData = imageDataModelFromJson(jsonEncode(response.data)).images;

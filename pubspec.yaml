@@ -19,6 +19,7 @@ dependencies:
   flutter_screenutil: ^5.9.0
   get: ^4.6.6
   cached_network_image: ^3.4.1
+  palette_generator: ^0.3.3+4
 
 dev_dependencies:
   flutter_test:

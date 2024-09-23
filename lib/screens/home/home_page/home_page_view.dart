@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -15,7 +18,7 @@ class HomePageWidget extends StatelessWidget {
     _scrollController.addListener(() {
       if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
         // When the user reaches the bottom of the list, load more images
-        _controller.fetchImages(loadMore: true);
+        _controller.fetchImages(loadMore: true,query: _controller.lastQuery);
       }
     });
   }
@@ -86,8 +89,17 @@ class HomePageWidget extends StatelessWidget {
   Widget _buildImageGrid(BuildContext context) {
     var screenWidth = MediaQuery.of(context).size.width;
     var crossAxisCount = (screenWidth ~/ 150); // Calculate number of columns
-
+    ScrollPhysics getScrollPhysics() {
+      if (kIsWeb) {
+        return const ClampingScrollPhysics();
+      } else if (Platform.isAndroid || Platform.isIOS) {
+        return const BouncingScrollPhysics();
+      } else {
+        return const AlwaysScrollableScrollPhysics();
+      }
+    }
     return GridView.builder(
+      physics: getScrollPhysics(),
       controller: _scrollController, // Attach the ScrollController for pagination
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount, // Use calculated columns count
@@ -114,18 +126,77 @@ class HomePageWidget extends StatelessWidget {
             child: CachedNetworkImage(imageUrl: image.webformatUrl!,fit: BoxFit.cover)
             // child:Image.network(image.webformatUrl!, fit: BoxFit.cover),
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('${image.likes} likes', style: const TextStyle(fontSize: 12)),
-                Text('${image.views} views', style: const TextStyle(fontSize: 12)),
-              ],
-            ),
-          ),
+           LikesAndViews(image),
         ],
       ),
+    );
+  }
+}
+
+class LikesAndViews extends StatelessWidget {
+  final ImageData image;
+
+  const LikesAndViews(this.image, {
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final img = Image.network(image.webformatUrl!);
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: kIsWeb?
+      LikeAndView(backColor: Colors.black26, image: image, textColor: Colors.white)
+          :FutureBuilder(
+          future: ColorScheme.fromImageProvider(provider: img.image),
+        builder: (context,snap) {
+          if (snap.connectionState == ConnectionState.waiting) {
+            return const SizedBox.shrink();
+          }
+          final textColor = snap.data!.primaryContainer;
+          final backColor = snap.data!.onPrimaryFixedVariant;
+          return LikeAndView(backColor: backColor, image: image, textColor: textColor);
+        }
+      ),
+    );
+  }
+}
+
+class LikeAndView extends StatelessWidget {
+  const LikeAndView({
+    super.key,
+    required this.backColor,
+    required this.image,
+    required this.textColor,
+  });
+
+  final Color backColor;
+  final ImageData image;
+  final Color textColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 2,horizontal: 10),
+            decoration: BoxDecoration(
+              borderRadius: const BorderRadius.all(Radius.circular(10)),
+              color:backColor
+            ),
+            child: Text('${image.likes} likes', style:  TextStyle(fontSize: 12, color: textColor))),
+        const SizedBox(
+          height: 5,
+        ),
+        Container(
+            padding: const EdgeInsets.symmetric(vertical: 2,horizontal: 10),
+            decoration: BoxDecoration(
+                borderRadius: const BorderRadius.all(Radius.circular(10)),
+                color:backColor
+            ),child: Text('${image.views} views', style: TextStyle(fontSize: 12, color: textColor))),
+      ],
     );
   }
 }

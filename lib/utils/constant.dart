@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 // Just for demo
@@ -78,8 +79,7 @@ class Constant {
   static const responseUnauthorizedCode = 401;
   static const responseNotFound = 404;
 
-  static const PER_PAGE_DATA = 10;
-  static const PER_PAGE_DATA_KUDO_LIST = 15;
+  static const PER_PAGE_DATA = kIsWeb?70:20;
 
   static const languageEn = "en";
   static const countryCodeEn = "US";
